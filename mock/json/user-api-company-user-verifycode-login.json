@@ -1,0 +1,12 @@
+{
+  "canRetry": true,
+  "code": "200",
+  "data": "token",
+  "errorLevel": "string",
+  "errorType": "string",
+  "errors": [
+    "string"
+  ],
+  "msg": "string",
+  "success": true
+}
