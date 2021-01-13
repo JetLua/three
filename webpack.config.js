@@ -98,10 +98,6 @@ module.exports = ({env} = {}) => {
     },
 
     plugins: [
-      new webpack.ProvidePlugin({
-        THREE: 'three'
-      }),
-
       new HtmlWebpackPlugin({
         hash: true,
         template: './src/layout.html',
@@ -172,7 +168,6 @@ module.exports = ({env} = {}) => {
 
     config.devServer = {
       hot: true,
-      before: mock,
       host: '0.0.0.0',
       contentBase: '.',
       stats: 'errors-only',
