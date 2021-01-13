@@ -1,30 +1,51 @@
-import {renderer, stage, Ticker} from '~/core'
+import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls'
 
-const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, .01, 10)
-camera.position.z = 1
-const box = new THREE.BoxGeometry(.2, .2, .2)
-const material = new THREE.MeshNormalMaterial()
+import {transform} from '~/util'
+import {ticker, stage, camera, renderer} from '~/core'
+import mapChina from '@/static/map.china.json'
 
-const mesh = new THREE.Mesh(box, material)
-stage.add(mesh)
+const min = {
+  x: Infinity,
+  y: Infinity
+}
 
-renderer.setSize(innerWidth, innerHeight)
-renderer.setAnimationLoop((t) => {
-  mesh.rotation.x = t / 2e3
-  mesh.rotation.y = t / 2e3
-  renderer.render(stage, camera)
-})
+const max = {
+  x: -Infinity,
+  y: -Infinity
+}
 
+const groups = []
 
-const ticker = new Ticker()
+for (const feature of mapChina.features) {
+  for (const coord of feature.geometry.coordinates) {
+    for (const group of coord) {
+      const _group = []
+      groups.push(_group)
+      for (let [x, y] of group) {
+        if (x < min.x) min.x = x
+        if (x > max.x) max.x = x
+        if (y < min.y) min.y = y
+        if (y > max.y) max.y = y
+        _group.push([x, y])
+      }
+    }
+  }
+}
 
-ticker.add(function() {console.log(1, this)}, {ok: 1}, Ticker.PRIORITY.UTILITY)
-ticker.add(() => console.log(3), null, Ticker.PRIORITY.NORMAL)
-ticker.add(() => console.log(10), null, Ticker.PRIORITY.HIGH)
-ticker.add(() => console.log(3.1), null, Ticker.PRIORITY.NORMAL)
-ticker.add(() => console.log(10.1), null, Ticker.PRIORITY.HIGH)
-ticker.addOnce(() => console.log(1.1), null, Ticker.PRIORITY.UTILITY)
+const center = {x: (min.x + max.x) / 2, y: (min.y + max.y) / 2}
 
+for (const group of groups) {
+  const geometry = new THREE.Geometry()
+  const material = new THREE.LineBasicMaterial({vertexColors: true})
+  const shape = new THREE.Line(geometry, material)
+  const color = new THREE.Color(0x00bcd4)
+  stage.add(shape)
+  for (let [x, y] of group) {
+    geometry.vertices.push(new THREE.Vector3((x - center.x), (y - center.y), -100))
+    geometry.colors.push(color)
+  }
+}
 
-ticker.update()
-ticker.update()
+camera.position.z = 10
+
+const control = new OrbitControls(camera, renderer.domElement)

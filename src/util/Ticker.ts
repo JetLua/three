@@ -12,23 +12,21 @@ export default class Ticker {
   head: Task
   last: Task
 
-  constructor() {
+  #stopped = false
 
-  }
-
-  add(fn: Function, ctx?: any, priority: PRIORITY = PRIORITY.NORMAL) {
+  add(fn: IFn, ctx?: any, priority: PRIORITY = PRIORITY.NORMAL) {
     const task = new Task(fn, ctx, priority)
     if (this.last) this.last.connect(task, this)
     else this.head = this.last = task
   }
 
-  addOnce(fn: Function, ctx?: any, priority: PRIORITY = PRIORITY.NORMAL) {
+  addOnce(fn: IFn, ctx?: any, priority: PRIORITY = PRIORITY.NORMAL) {
     const task = new Task(fn, ctx, priority, true)
     if (this.last) this.last.connect(task, this)
     else this.head = this.last = task
   }
 
-  remove(fn: Function) {
+  remove(fn: IFn) {
     const current = this.head
 
     while (current) {
@@ -38,13 +36,23 @@ export default class Ticker {
     }
   }
 
-  update() {
+  update(t?: number) {
+    if (this.#stopped) return
     let current = this.head
     while (current) {
-      current.fn.call(current.ctx)
-      if (current.once) current = current.destroy(this)
-      else current = current.next
+      const {next} = current
+      current.fn.call(current.ctx, t)
+      current.once && current.destroy(this)
+      current = next
     }
+  }
+
+  stop() {
+    this.#stopped = true
+  }
+
+  start() {
+    this.#stopped = false
   }
 }
 
@@ -68,7 +76,6 @@ class Task {
       if (this.prev) this.prev.connect(task, ticker)
       else task.connect(this, ticker)
     } else {
-      // if (task.priority === PRIORITY.UTILITY) debugger
       const {next} = this
       this.next = task
       task.prev = this
@@ -96,7 +103,9 @@ class Task {
     this.next =
     this.once =
     this.priority = null
-
-    return next
   }
+}
+
+interface IFn {
+  (t?: number): void
 }
