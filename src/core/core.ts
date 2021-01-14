@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 
+import './env'
 import {Ticker} from '~/util'
 
 const {

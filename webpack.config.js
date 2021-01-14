@@ -33,6 +33,10 @@ module.exports = ({env} = {}) => {
 
     target: prod ? 'browserslist' : 'web',
 
+    experiments: {
+      topLevelAwait: true
+    },
+
     output: {
       path: path.resolve('dist'),
       filename: '[name].[contenthash:8].js',
