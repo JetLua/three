@@ -10,7 +10,6 @@ let group: THREE.Group
 function init() {
   group = new THREE.Group()
   addMap()
-  addBox()
   camera.position.z = 10
   stage.add(group)
 }
@@ -28,44 +27,32 @@ async function addMap() {
   const d3 = await import('d3-geo')
   const data = await import('@/static/map.china.json')
   const project = d3.geoMercator().center([104, 37.5]).scale(10).translate([0, 0])
+  const min = {x: Infinity, y: Infinity}
+  const max = {x: -Infinity, y: -Infinity}
+  const groups = []
+  const size = {width: 0, height: 0}
 
   project.reflectY(true)
 
   for (const feature of data.features) {
-    if (!feature.properties.center) continue
-
-    const center = project(feature.properties.center as any)
-
     for (const coord of feature.geometry.coordinates) {
       for (const points of coord) {
-        const shape = new THREE.Shape()
-
+        const group = []
+        groups.push(group)
         points.forEach((point: [number, number], i) => {
-          const [x, y] = project(point)
-          i ? shape.lineTo(x, y) : shape.moveTo(x, y)
+          point = project(point)
+          group.push(point)
+          if (point[0] < min.x) min.x = point[0]
+          if (point[0] > max.x) max.x = point[0]
+          if (point[1] < min.y) min.y = point[1]
+          if (point[1] > max.y) max.y = point[1]
         })
-
-        const texture = await loader.loadAsync('1.jpg') as THREE.Texture
-        // const texture = window.textureCache['1.jpg'].clone()
-        texture.wrapS = THREE.RepeatWrapping
-        texture.wrapT = THREE.RepeatWrapping
-        // texture.offset.x = center[0]
-        // texture.offset.y = center[1]
-
-        const line = new THREE.Mesh(
-          // new THREE.ShapeGeometry(shape),
-          new THREE.ExtrudeGeometry(shape, {depth: .1, bevelEnabled: false}),
-          new THREE.MeshBasicMaterial({
-            map: texture
-          })
-        )
-
-        console.log(line.geometry.faceVertexUvs)
-
-        group.add(line)
       }
     }
   }
+
+  size.width = max.x - min.x
+  size.height = max.y - min.y
 }
 
 async function addBox() {
@@ -75,10 +62,5 @@ async function addBox() {
       map: window.textureCache['1.jpg']
     })
   )
-
-  console.log(box.geometry.faceVertexUvs)
-
-
-
   group.add(box)
 }
