@@ -29,7 +29,7 @@ async function addMap() {
   const project = d3.geoMercator().center([104, 37.5]).scale(10).translate([0, 0])
   const min = {x: Infinity, y: Infinity}
   const max = {x: -Infinity, y: -Infinity}
-  const groups = []
+  const groups: number[][][] = []
   const size = {width: 0, height: 0}
 
   project.reflectY(true)
@@ -53,6 +53,52 @@ async function addMap() {
 
   size.width = max.x - min.x
   size.height = max.y - min.y
+
+  for (const _group of groups) {
+    const shape = new THREE.Shape()
+    _group.forEach(([x, y], i) => {
+      i ? shape.lineTo(x, y) : shape.moveTo(x, y)
+    })
+
+    const texture = window.textureCache['3.jpg'].clone()
+    texture.needsUpdate = true
+
+    const mesh = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(shape, {
+        depth: .1,
+        bevelEnabled: false,
+        UVGenerator: {
+          generateSideWallUV(geometry, vertices, a, b, c, d) {
+            // 挤压面的纹理映射，没有反而更好看
+            return [
+              new THREE.Vector2(0, 0),
+              new THREE.Vector2(0, 0),
+              new THREE.Vector2(0, 0),
+              new THREE.Vector2(0, 0),
+            ]
+          },
+
+          generateTopUV(geometry, vertices, a, b, c) {
+            const ax = (vertices[a * 3] - min.x) / size.width
+            const ay = (vertices[a * 3 + 1] - min.y) / size.height
+            const bx = (vertices[b * 3] - min.x) / size.width
+            const by = (vertices[b * 3 + 1] - min.y) / size.height
+            const cx = (vertices[c * 3] - min.x) / size.width
+            const cy = (vertices[c * 3 + 1] - min.y) / size.height
+
+            return [new THREE.Vector2(ax, ay), new THREE.Vector2(bx, by), new THREE.Vector2(cx, cy)]
+          },
+        }
+      }),
+      new THREE.MeshBasicMaterial({
+        map: texture
+      })
+    )
+
+    group.add(mesh)
+
+    // return
+  }
 }
 
 async function addBox() {

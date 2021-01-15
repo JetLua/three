@@ -7,7 +7,7 @@ loader.setPath('/static/texture/')
 window.textureCache = {}
 
 export default async function() {
-  const textures = ['1.jpg']
+  const textures = ['1.jpg', '2.jpg', '3.jpg']
   for (const id of textures) {
     window.textureCache[id] = await loader.loadAsync(id)
   }
